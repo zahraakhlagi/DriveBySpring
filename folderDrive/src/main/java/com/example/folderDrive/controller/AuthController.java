@@ -1,5 +1,8 @@
 package com.example.folderDrive.controller;
 
+import com.example.folderDrive.dto.AuthenticateRequest;
+import com.example.folderDrive.dto.AuthenticationResponse;
+import com.example.folderDrive.dto.RegisterRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
