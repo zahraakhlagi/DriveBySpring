@@ -6,6 +6,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Service;
 
 import java.security.Key;
 import java.util.Date;
@@ -14,9 +15,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
+@Service
 public class JwtService {
-    private static final String SECRET_KEY="fbWRpwB1JzTboXyqi7Ugg6PF/xjGjJ7ldLboV0eDNrxzihV8GTi3SysyQpe+I+Vy";
-    public String extractUsername(String token) {
+    private static final String SECRET_KEY="Zdq2JStDU/8CGIxXg7oMoHSrn6J07p2zQXNMfxE1JhrteGjQJiighwo0xoucXpIO";
+    public String extractUsername(String token)
+    {
+
         return  extractClaims(token, Claims::getSubject);
     }
     public <T> T extractClaims(String token, Function<Claims,T> claimsResolver){
@@ -24,9 +28,9 @@ public class JwtService {
         return claimsResolver.apply(claims);
     }
     public String generateToken(UserDetails userDetails){
-        return generateToken(new HashMap<>(),userDetails);
+        return buildToken(new HashMap<>(),userDetails);
     }
-    public String generateToken(
+    public String buildToken(
             Map<String, Objects> extraClaims,
             UserDetails userDetails
     ){
@@ -36,7 +40,7 @@ public class JwtService {
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis()+ 1000*60*24))
-                .signWith(getSignInKey(), SignatureAlgorithm.ES256)
+                .signWith(getSignInKey(),SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -58,12 +62,14 @@ public class JwtService {
                 .parserBuilder()
                 .setSigningKey(getSignInKey())
                 .build()
-                .parseClaimsJwt(token)
+                .parseClaimsJws(token)
                 .getBody();
     }
 
     private Key getSignInKey() {
         byte[] keyBytes= Decoders.BASE64.decode(SECRET_KEY);
-        return Keys.hmacShaKeyFor(keyBytes);
+        Key key=Keys.hmacShaKeyFor(keyBytes);
+        System.out.println("secret key" + key);
+        return key;
     }
 }
