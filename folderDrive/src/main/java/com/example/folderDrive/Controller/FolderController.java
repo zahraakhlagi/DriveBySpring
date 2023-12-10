@@ -16,16 +16,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class FolderController {
     private final FolderService folderService;
 
+    //this endpoint is to create a folder by login user
     @PostMapping("/folder")
     public ResponseEntity<String> createAFolder(@AuthenticationPrincipal User user, @RequestBody CreateFolder createFolder) {
-        boolean result=folderService.createFolder(user,createFolder);
+        boolean result = folderService.createFolder(user, createFolder);
         if (result) {
             return ResponseEntity.status(HttpStatus.CREATED).body("Folder successfully created");
-        }else {
+        } else {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR.ordinal()).body("Somthing went wrong");
         }
 
     }
 
 
-    }
+}

@@ -1,4 +1,4 @@
-package com.example.folderDrive.controller;
+package com.example.folderDrive.Controller;
 
 import com.example.folderDrive.dto.AuthenticateRequest;
 import com.example.folderDrive.dto.AuthenticationResponse;
@@ -19,21 +19,23 @@ public class AuthController {
 
     private final AuthenticationService authenticationService;
 
+    //this endpoint is to register the new user
     @PostMapping("/register")
     public ResponseEntity<AuthenticationResponse> register(
-         @Valid @RequestBody RegisterRequest request
-    ){
+            @Valid @RequestBody RegisterRequest request
+    ) {
         return ResponseEntity.ok(authenticationService.register(request));
 
     }
+
+    //this endpoint is to log in user
     @PostMapping("/authenticate")
     public ResponseEntity<AuthenticationResponse> login(
             @Valid @RequestBody AuthenticateRequest request
-    ){
+    ) {
         return ResponseEntity.ok(authenticationService.login(request));
 
     }
-
 
 
 }

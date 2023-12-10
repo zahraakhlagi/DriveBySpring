@@ -1,6 +1,7 @@
 package com.example.folderDrive.model;
 
 import jakarta.persistence.*;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "_folder")
 @NoArgsConstructor
+@Data
 public class Folder {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

@@ -1,18 +1,17 @@
 package com.example.folderDrive.service;
 
 
-import com.example.folderDrive.dto.AuthenticationRequest;
+import com.example.folderDrive.dto.AuthenticateRequest;
 
 import com.example.folderDrive.dto.AuthenticationResponse;
 import com.example.folderDrive.dto.RegisterRequest;
 import com.example.folderDrive.model.Role;
 import com.example.folderDrive.model.User;
 import com.example.folderDrive.repositoreis.UserRepository;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-
-import org.springframework.security.core.Authentication;
 
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -48,7 +47,7 @@ public class AuthenticationService {
     }
 
 
-    public AuthenticationResponse login(AuthenticationRequest request) {
+    public AuthenticationResponse login(@Valid AuthenticateRequest request) {
         //call the authentication manager
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())

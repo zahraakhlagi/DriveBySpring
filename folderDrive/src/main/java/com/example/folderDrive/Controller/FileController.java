@@ -1,72 +1,70 @@
 package com.example.folderDrive.Controller;
 
-import com.example.folderDrive.dto.ResponseFile;
-import com.example.folderDrive.dto.ResponseMessage;
-import com.example.folderDrive.model.DatabaseFile;
+import com.example.folderDrive.dto.Response;
+import com.example.folderDrive.model.File;
 import com.example.folderDrive.model.User;
-import com.example.folderDrive.service.FileStorageService;
+import com.example.folderDrive.service.FileService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api")
 public class FileController {
+    private final FileService fileService;
 
-    private final FileStorageService storageService;
+    //this endpoint is to upload the file by login user in special folder
+    @PostMapping("/uploadFile")
+    public Response uploadFile(@AuthenticationPrincipal User user,
+                               @RequestParam("file") MultipartFile file,
+                               @RequestParam("folder") UUID folderId) {
+        File fileName = fileService.storeFile(user, file, folderId);
 
-    @PostMapping("/upload")
-    public ResponseEntity<ResponseMessage> uploadFile(
-            @AuthenticationPrincipal User user,
-            @RequestParam("file") MultipartFile file) throws IOException {
-        DatabaseFile fileName= storageService.uploadFile(user,file);
-        /*String fileDownLoadUri= ServletUriComponentsBuilder.fromCurren
-        tContexPath()
-                .path("/downloadFile")
+        String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path("/downloadFile/")
                 .path(fileName.getFileName())
-                .toUriString();*/
+                .toUriString();
 
-            String message = "";
-        try {
-            storageService.uploadFile(user,file);
-            message = "Uploaded the file successfully: " + file.getOriginalFilename();
-            return ResponseEntity.status(HttpStatus.OK).body(new ResponseMessage(message));
-        } catch (Exception e) {
-            message = "Could not upload the file: " + file.getOriginalFilename() + "!";
-            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new ResponseMessage(message));
-        }
+        return new Response(fileName.getFileName(), fileDownloadUri,
+                file.getContentType(), file.getSize());
     }
+
+    //this endpoint is to download the file by user , that the file is in a folder
+    @GetMapping("/downloadFile")
+    public ResponseEntity<Resource> downloadFile(@AuthenticationPrincipal User user, @RequestParam UUID fileId, @RequestParam UUID folderId, HttpServletRequest request) throws FileNotFoundException {
+        // Load file as Resource
+        File databaseFile = fileService.getFile(user, fileId, folderId);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(databaseFile.getFileType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + databaseFile.getFileName() + "\"")
+                .body(new ByteArrayResource(databaseFile.getData()));
+    }
+    //this endpoint is to get all files that user has in your folder
+
     @GetMapping("/files")
-    public ResponseEntity<List<ResponseFile>> getListFile(){
-        List<ResponseFile> files=storageService
-                .getAllFiles()
-                .map(dbFile-> {
-                    String fileDownloadUri= ServletUriComponentsBuilder
-                            .fromCurrentRequestUri()
-                            .path("/files/")
-                            .path(String.valueOf(dbFile.getId()))
-                            .toUriString();
-
-                    return new ResponseFile(
-                            dbFile.getFileName(),
-                            fileDownloadUri,
-                            dbFile.getFileType(),
-                            (long) dbFile.getData().length);}).toList();
-        return ResponseEntity.status(HttpStatus.OK).body(files);
+    public ResponseEntity<List<File>> getAllFiles(@AuthenticationPrincipal User user, @RequestParam UUID folderId) throws IllegalAccessException {
+        List<File> result = fileService.getAllFiles(user, folderId);
+        return ResponseEntity.ok(result);
     }
 
+    //this endpoint is to delete a file by own user
+    @DeleteMapping("/delete")
+    public ResponseEntity<String> deleteFile(@AuthenticationPrincipal User user, @RequestParam UUID folderId, @RequestParam UUID fileId) throws FileNotFoundException {
+        fileService.deleteFile(user, folderId, fileId);
+        return ResponseEntity.ok("File deleted successfully.");
     }
 
-
-
-
-
+}
