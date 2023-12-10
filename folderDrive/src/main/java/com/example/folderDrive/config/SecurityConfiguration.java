@@ -1,8 +1,7 @@
 package com.example.folderDrive.config;
 
-import com.example.folderDrive.model.User;
 import com.example.folderDrive.repositoreis.UserRepository;
-import com.example.folderDrive.service.userService;
+import com.example.folderDrive.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,7 +12,6 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,38 +25,22 @@ public class SecurityConfiguration {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final UserRepository userRepository;
-    private AuthenticationProvider authenticationProvider;
+    private final UserService userService;
+    private final AuthenticationProvider authProvider;
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth-> auth
+
+                .authorizeHttpRequests(req-> req
                         .requestMatchers("/api/auth/**").permitAll()
                         .anyRequest().authenticated())
-                .authenticationProvider(authenticationProvider)
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .authenticationProvider(authProvider)
+
+
+              .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
-    @Bean
-    public UserDetailsService userDetailsService(){
-        return new userService(userRepository);
-    }
-    //fetch the userDetails and encode the password
-    @Bean
-    public AuthenticationProvider authenticationProvider(){
-        DaoAuthenticationProvider Dao= new DaoAuthenticationProvider();
-        Dao.setUserDetailsService(userDetailsService());
-        Dao.setPasswordEncoder(passwordEncoder());
-        return Dao;
-    }
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
-        return configuration.getAuthenticationManager();
-    }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
 }
